@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react"
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react"
 import ReactDOM from "react-dom"
 import { useTheme } from "../hooks/useTheme"
 import { useAuth } from "../hooks/useAuth"
@@ -614,6 +614,21 @@ export default function DiversifikasiPMPage() {
   }
 
   const [data, setData]           = useState<DiversifikasiPM[]>([])
+
+  // Measure the actual rendered height of the first sticky header row so the
+  // second header row sticks at the correct offset (avoids relying on a hardcoded px value).
+  const headerRow1Ref = useRef<HTMLTableRowElement>(null)
+  const [headerRow1Height, setHeaderRow1Height] = useState(HEADER_ROW1_HEIGHT)
+  useLayoutEffect(() => {
+    const el = headerRow1Ref.current
+    if (!el) return
+    const measure = () => setHeaderRow1Height(el.offsetHeight)
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    window.addEventListener("resize", measure)
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure) }
+  }, [])
   const [loading, setLoading]     = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [pagination, setPagination] = useState<PaginationState>({
@@ -634,7 +649,8 @@ export default function DiversifikasiPMPage() {
   const [form, setForm]             = useState<FormData>(EMPTY_FORM)
   const [successModal, setSuccessModal] = useState<{ open: boolean; message: string }>({ open: false, message: "" })
 
-  // Autosave/restore draft only for the "Tambah" (add) form, not edit or isi-ulang.
+  const initialFormRef = useRef<FormData>(EMPTY_FORM)
+
   useFormDraft(DRAFT_KEY_PM, showModal && !isEdit && !isIsiUlang, form, setForm)
 
   const [pendingNewItem, setPendingNewItem] = useState<{
@@ -716,6 +732,7 @@ export default function DiversifikasiPMPage() {
 
   const openAdd = () => {
     setIsEdit(false); setIsIsiUlang(false)
+    initialFormRef.current = { ...EMPTY_FORM }
     setForm({ ...EMPTY_FORM })
     setPendingNewItem(null); setShowNewItemConfirm(false)
     setPendingTrialProduk(null)
@@ -724,7 +741,7 @@ export default function DiversifikasiPMPage() {
 
   const openEdit = (row: DiversifikasiPM) => {
     setIsEdit(true); setIsIsiUlang(false)
-    setForm({
+    const nextForm: FormData = {
       id: row.id,
       nomorPM: row.nomorPM,
       parentId: row.parentId ?? null,
@@ -748,7 +765,9 @@ export default function DiversifikasiPMPage() {
         produkTglKirimQC:     p.produkTglKirimQC     ? String(p.produkTglKirimQC).slice(0, 10)     : null,
         produkTglKeluarHasil: p.produkTglKeluarHasil ? String(p.produkTglKeluarHasil).slice(0, 10) : null,
       })),
-    })
+    }
+    initialFormRef.current = nextForm
+    setForm(nextForm)
     setPendingNewItem(null); setShowNewItemConfirm(false)
     setPendingTrialProduk(null)
     setShowModal(true)
@@ -756,10 +775,19 @@ export default function DiversifikasiPMPage() {
 
   const openIsiUlang = (row: DiversifikasiPM) => {
     setIsEdit(false); setIsIsiUlang(true)
-    setForm({ ...EMPTY_FORM, nomorPM: row.nomorPM, parentId: row.id })
+    const nextForm: FormData = { ...EMPTY_FORM, nomorPM: row.nomorPM, parentId: row.id }
+    initialFormRef.current = nextForm
+    setForm(nextForm)
     setPendingNewItem(null); setShowNewItemConfirm(false)
     setPendingTrialProduk(null)
     setShowModal(true)
+  }
+
+  const handleReset = () => {
+    setForm({ ...initialFormRef.current })
+    setPendingNewItem(null); setShowNewItemConfirm(false)
+    setPendingTrialProduk(null)
+    if (!isEdit && !isIsiUlang) clearFormDraft(DRAFT_KEY_PM)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1030,7 +1058,7 @@ export default function DiversifikasiPMPage() {
           <div className="max-h-[500px] overflow-y-auto">
             <table className="w-full border-separate text-xs" style={{ minWidth: "1600px", borderSpacing: 0 }}>
               <thead>
-                <tr>
+                <tr ref={headerRow1Ref}>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-r border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>No (PM)</th>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-r border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>Status Project</th>
                   <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#2e3192] sticky top-0 z-20 shadow border-x border-white/20" style={{ height: HEADER_ROW1_HEIGHT }}>INFORMASI UMUM</th>
@@ -1041,14 +1069,14 @@ export default function DiversifikasiPMPage() {
                 </tr>
                 <tr>
                   {["Tgl Penerimaan", "Kode Item", "Nama Material", "Manufacture", "No Batch"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#3d43b8] sticky z-10 shadow border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#3d43b8] sticky z-10 shadow border-t border-white/10" style={{ top: headerRow1Height }}>{h}</th>
                   ))}
                   {["Lead Time", "Tgl Analisa", "Tgl Report", "Hasil Analisa", "Keterangan"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#0284b3] sticky z-10 shadow text-center border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#0284b3] sticky z-10 shadow text-center border-t border-white/10" style={{ top: headerRow1Height }}>{h}</th>
                   ))}
-                  <th className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#6d28d9] sticky z-10 shadow text-center border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>Jumlah</th>
+                  <th className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#6d28d9] sticky z-10 shadow text-center border-t border-white/10" style={{ top: headerRow1Height }}>Jumlah</th>
                   {["Kode Produk", "No Batch", "Hasil Final", "Link File", "Kesimpulan"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#065f46] sticky z-10 shadow border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#065f46] sticky z-10 shadow border-t border-white/10" style={{ top: headerRow1Height }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1357,6 +1385,10 @@ export default function DiversifikasiPMPage() {
                 <button type="button" onClick={() => setShowModal(false)}
                   className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-500 hover:border-gray-400 bg-transparent transition-colors">
                   Batal
+                </button>
+                <button type="button" onClick={handleReset}
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-neutral-700 text-gray-500 hover:border-red-400 hover:text-red-500 bg-transparent transition-colors">
+                  Reset
                 </button>
                 <button type="submit"
                   className="px-5 py-2 text-sm font-semibold rounded-lg bg-[#80bc00] hover:bg-[#6da300] text-white transition-colors shadow-sm">
