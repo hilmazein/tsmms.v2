@@ -13,6 +13,18 @@ export function useFormDraft<T>(
   const loadedForKeyRef = useRef<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const latestFormRef = useRef(form)
+  const latestKeyRef = useRef(key)
+  latestFormRef.current = form
+  latestKeyRef.current = key
+
+  const flushNow = () => {
+    try {
+      window.localStorage.setItem(latestKeyRef.current, JSON.stringify(latestFormRef.current))
+    } catch {
+    }
+  }
+
   useEffect(() => {
     if (!active) {
       loadedForKeyRef.current = null
@@ -35,17 +47,32 @@ export function useFormDraft<T>(
     if (!active) return
 
     if (timerRef.current) clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(() => {
-      try {
-        window.localStorage.setItem(key, JSON.stringify(form))
-      } catch {
-      }
-    }, debounceMs)
+    timerRef.current = setTimeout(flushNow, debounceMs)
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [active, key, form, debounceMs])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, form, debounceMs])
+
+  useEffect(() => {
+    if (!active) return
+    return () => {
+      flushNow()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active])
+
+  useEffect(() => {
+    if (!active) return
+    window.addEventListener("beforeunload", flushNow)
+    window.addEventListener("pagehide", flushNow)
+    return () => {
+      window.removeEventListener("beforeunload", flushNow)
+      window.removeEventListener("pagehide", flushNow)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active])
 }
 
 export function clearFormDraft(key: string): void {

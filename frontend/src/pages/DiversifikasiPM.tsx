@@ -11,6 +11,7 @@ import { API_BASE } from "../config"
 import ExportPMModal from "./ExportPM"
 
 const DRAFT_KEY_PM = "draft-diversifikasi-pm"
+const HEADER_ROW1_HEIGHT = 34
 
 const HASIL_OPTIONS: HasilAnalisa[]    = ["MS", "TMS", "OP", "N/A"]
 const STATUS_HASIL_OPTIONS: StatusRM[] = ["Reject", "Release", "On Progress", "N/A"]
@@ -1032,22 +1033,22 @@ export default function DiversifikasiPMPage() {
                 <tr>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-r border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>No (PM)</th>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-r border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>Status Project</th>
-                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#2e3192] sticky top-0 z-20 shadow border-x border-white/20">INFORMASI UMUM</th>
-                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#0369a1] sticky top-0 z-20 shadow border-x border-white/20">PACKAGING MATERIAL</th>
-                  <th colSpan={1} className="py-2 text-center text-[10px] font-bold text-white bg-[#7c3aed] sticky top-0 z-20 shadow border-x border-white/20">ALOKASI PRODUK</th>
-                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#047857] sticky top-0 z-20 shadow border-x border-white/20">TRIAL MESIN</th>
+                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#2e3192] sticky top-0 z-20 shadow border-x border-white/20" style={{ height: HEADER_ROW1_HEIGHT }}>INFORMASI UMUM</th>
+                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#0369a1] sticky top-0 z-20 shadow border-x border-white/20" style={{ height: HEADER_ROW1_HEIGHT }}>PACKAGING MATERIAL</th>
+                  <th colSpan={1} className="py-2 text-center text-[10px] font-bold text-white bg-[#7c3aed] sticky top-0 z-20 shadow border-x border-white/20" style={{ height: HEADER_ROW1_HEIGHT }}>ALOKASI PRODUK</th>
+                  <th colSpan={5} className="py-2 text-center text-[10px] font-bold text-white bg-[#047857] sticky top-0 z-20 shadow border-x border-white/20" style={{ height: HEADER_ROW1_HEIGHT }}>TRIAL MESIN</th>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-l border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>Aksi</th>
                 </tr>
                 <tr>
                   {["Tgl Penerimaan", "Kode Item", "Nama Material", "Manufacture", "No Batch"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#3d43b8] sticky top-[32px] z-10 shadow border-t border-white/10">{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#3d43b8] sticky z-10 shadow border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
                   ))}
                   {["Lead Time", "Tgl Analisa", "Tgl Report", "Hasil Analisa", "Keterangan"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#0284b3] sticky top-[32px] z-10 shadow text-center border-t border-white/10">{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#0284b3] sticky z-10 shadow text-center border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
                   ))}
-                  <th className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#6d28d9] sticky top-[32px] z-10 shadow text-center border-t border-white/10">Jumlah</th>
+                  <th className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#6d28d9] sticky z-10 shadow text-center border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>Jumlah</th>
                   {["Kode Produk", "No Batch", "Hasil Final", "Link File", "Kesimpulan"].map(h => (
-                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#065f46] sticky top-[32px] z-10 shadow border-t border-white/10">{h}</th>
+                    <th key={h} className="px-3 py-2 text-[10px] font-semibold uppercase text-white whitespace-nowrap bg-[#065f46] sticky z-10 shadow border-t border-white/10" style={{ top: HEADER_ROW1_HEIGHT }}>{h}</th>
                   ))}
                 </tr>
               </thead>
