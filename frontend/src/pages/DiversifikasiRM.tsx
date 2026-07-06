@@ -5,8 +5,12 @@ import { useAuth } from "../hooks/useAuth"
 import type { DiversifikasiRM, DiversifikasiProduk, HasilAnalisa, StatusRM, StatusProject } from "../types/types"
 import ItemAutocomplete from "../components/ItemAutocomplete"
 import ProductAutocomplete from "../components/ProductAutocomplete"
+import SuccessModal from "../components/SuccessModal"
+import { useFormDraft, clearFormDraft } from "../hooks/useFormDraft"
 import { API_BASE } from "../config"
 import ExportRMModal from "./ExportRM"
+
+const DRAFT_KEY_RM = "draft-diversifikasi-rm"
 
 const HASIL_OPTIONS: HasilAnalisa[] = ["MS", "TMS", "OP", "N/A"]
 const STATUS_RM_OPTIONS: StatusRM[] = ["Reject", "Release", "On Progress", "N/A"]
@@ -611,6 +615,10 @@ export default function DiversifikasiRMPage() {
   const [isEdit, setIsEdit]         = useState(false)
   const [isIsiUlang, setIsIsiUlang] = useState(false)
   const [form, setForm]             = useState<FormData>(EMPTY_FORM)
+  const [successModal, setSuccessModal] = useState<{ open: boolean; message: string }>({ open: false, message: "" })
+
+  // Autosave/restore draft only for the "Tambah" (add) form, not edit or isi-ulang.
+  useFormDraft(DRAFT_KEY_RM, showModal && !isEdit && !isIsiUlang, form, setForm)
 
   const [pendingNewItem, setPendingNewItem] = useState<{
     kodeItem: string; namaMaterial: string; manufacture: string; isManufactureOnly?: boolean
@@ -776,7 +784,14 @@ export default function DiversifikasiRMPage() {
       const res    = await fetch(url, { method, headers: authHeaders, body: JSON.stringify(payload) })
       if (!res.ok) { const e = await res.json().catch(() => ({ error: "Failed" })); throw new Error(e.error) }
       await fetchData()
-      alert(isEdit ? "Data berhasil diupdate!" : isIsiUlang ? "Isi ulang berhasil disimpan!" : "Data berhasil ditambahkan!")
+      if (!isEdit && !isIsiUlang) {
+        clearFormDraft(DRAFT_KEY_RM)
+        setForm({ ...EMPTY_FORM })
+      }
+      setSuccessModal({
+        open: true,
+        message: isEdit ? "Data berhasil diperbarui." : isIsiUlang ? "Isi ulang berhasil disimpan." : "Data berhasil ditambahkan.",
+      })
       setShowModal(false)
     } catch (err) { alert(`Gagal: ${(err as Error).message}`) }
   }
@@ -1022,7 +1037,7 @@ export default function DiversifikasiRMPage() {
       <div className="bg-white dark:bg-neutral-900 border border-gray-200 dark:border-neutral-800 rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <div className="max-h-[500px] overflow-y-auto">
-            <table className="w-full border-collapse text-xs" style={{ minWidth: "2200px" }}>
+            <table className="w-full border-separate text-xs" style={{ minWidth: "2200px", borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <th rowSpan={2} className="px-3 py-0 text-[10px] font-bold uppercase text-white bg-[#1e2a7a] sticky top-0 z-20 shadow text-center border-r border-white/20 whitespace-nowrap" style={{ verticalAlign: "middle" }}>No (RM)</th>
@@ -1114,6 +1129,12 @@ export default function DiversifikasiRMPage() {
       )}
 
       {showExport && <ExportRMModal data={data} onClose={() => setShowExport(false)} />}
+
+      <SuccessModal
+        open={successModal.open}
+        message={successModal.message}
+        onClose={() => setSuccessModal({ open: false, message: "" })}
+      />
 
       {showModal && ReactDOM.createPortal(
         <div style={OV_SCROLL}>
